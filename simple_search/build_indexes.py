@@ -37,13 +37,13 @@ class SongFileParser(object):
         return song
 
     @classmethod
-    def parse_song_file(cls, songs_file=songs_file):
-        # TODO batching or generator
-        documents = []
+    def parse_song_file(cls, songs_file=songs_file, chunk_size=10000):
         with open(songs_file) as f:
-            for line in f:
-                documents.append(cls.parse_raw_song(line))
-        return documents
+            while True:
+                documents = []
+                while(len(documents) < chunk_size):
+                    documents.append(cls.parse_raw_song(next(f)))
+                yield documents
 
 
 class WhooshIndexBuilder(object):
@@ -69,9 +69,9 @@ class WhooshIndexBuilder(object):
     @classmethod
     def import_indexes_from_fixtures(cls, songs_file=songs_file):
         cls.create_indexes()
-        documents = SongFileParser.parse_song_file(
-            songs_file=songs_file)
-        cls.add_documents(documents)
+        for documents in SongFileParser.parse_song_file(
+                songs_file=songs_file, chunksize=1000):
+            cls.add_documents(documents)
 
 
 class ElasticSearchIndexBuilder(object):
@@ -105,17 +105,17 @@ class ElasticSearchIndexBuilder(object):
             es.indices.delete(
                 index=ix_name)
         es.indices.create(index=ix_name, body=cls.es_indexes)
-        documents = SongFileParser.parse_song_file(
-            songs_file=songs_file)
-        actions = [{
-            '_index': ix_name,
-            '_type': 'document',
-            '_id': song['song_id'],
-            '_source': song
-        } for song in documents]
-        bulk(
-            es,
-            actions)
+        for documents in SongFileParser.parse_song_file(
+            songs_file=songs_file, chunk_size=10000):
+            actions = [{
+                '_index': ix_name,
+                '_type': 'document',
+                '_id': song['song_id'],
+                '_source': song
+            } for song in documents]
+            bulk(
+                es,
+                actions)
 
 if __name__ == '__main__':
     # WhooshIndexBuilder.import_indexes_from_fixtures()
