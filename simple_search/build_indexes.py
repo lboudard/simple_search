@@ -42,7 +42,9 @@ def add_documents(documents):
 
 def parse_raw_song(line):
     values = line.split("|")
-    return {k: parser(values[i]) for i, (k, parser) in enumerate(songs_fields)}
+    song = {k: parser(values[i]) for i, (k, parser) in enumerate(songs_fields)}
+    song['concat_title_artist'] = str(song['artist_id']) + song['title']
+    return song
 
 
 def import_indexes_from_fixtures():
