@@ -24,11 +24,11 @@ First test:
 - 100000 songs file
 
 Single thread, one instance of RAM index (350 M in memory, 80M as index file)
-- whoosh queries
 100 queries processed within 9.83786702156 (single thread)
 average query time: 0.00903088092804
 max query time 0.0304529666901
-(lot of time taken in terms reader/caching methods...)
+
+lot of time taken in terms reader/caching methods...
 37975    3.843    0.000    3.843    0.000 /Library/Python/2.7/sipackages/whoosh/filedb/structfile.py:367(get)
    234    0.001    0.000    3.825    0.016 /Library/Python/2.7/sipackages/whoosh/filedb/filestore.py:331(open_file)
    234    0.001    0.000    3.824    0.016 /Library/Python/2.7/sipackages/whoosh/filedb/compound.py:113(open_file)
@@ -38,5 +38,19 @@ max query time 0.0304529666901
 
    100    0.001    0.000    0.803    0.008 /Library/Python/2.7/sipackages/whoosh/searching.py:733(search)
 
+
+Elastic search (2.1.0)
+
+First test:
+- 10000 users file
+- 100000 songs file
+
+- 100 queries multithreaded on 10 'threads' (python multiprocesses)
+nb threads: 10
+nb queries_per_thread: 10
+max single thread time (s):0.204299926758
+max single query time (ms): 11.0
+avg query time (ms): 4.24
+total process time (s): 0.529282808304
 
 

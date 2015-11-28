@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 from random import randint
 from random_words import RandomWords
-from search import whoosh_search
+from multiprocessing import Pool
+from search import whoosh_search, elasticsearch_search
 from time import time
 import cProfile
 import pstats
@@ -26,35 +27,63 @@ class QueryGenerator(object):
         return self
 
 
-class WhooshBench(object):
+def bench_queries(search_method, limit=100, profile=False):
+    ret = {}
+    qg = QueryGenerator()
+    queries = [next(qg) for _ in range(limit)]
+    runtimes = []
+    if profile:
+        # TODO profile in context manager instead
+        pr = cProfile.Profile()
+        pr.enable()
+    start = time()
+    for q in queries:
+        res = search_method(*q)
+        if 'runtime' in res:
+            runtimes.append(float(res.get('runtime')))
+        elif 'took' in res:
+            runtimes.append(float(res.get('took')))
+    end = time()
+    if profile:
+        pr.disable()
+        s = StringIO.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+    ret['process_time'] = float(end - start)
+    ret['limit'] = limit
+    ret['avg_time'] = sum(runtimes) / float(len(runtimes))
+    ret['max_query_time'] = max(runtimes)
+    return ret
 
-    @classmethod
-    def bench_queries(cls, limit=100, profile=False):
-        qg = QueryGenerator()
-        queries = [next(qg) for _ in range(limit)]
-        runtimes = []
-        if profile:
-            # TODO profile in context manager instead
-            pr = cProfile.Profile()
-            pr.enable()
-        start = time()
-        for q in queries:
-            runtimes.append(float(whoosh_search(*q).get('runtime')))
-        end = time()
-        if profile:
-            pr.disable()
-            s = StringIO.StringIO()
-            sortby = 'cumulative'
-            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-            ps.print_stats()
-            print(s.getvalue())
-        print('{limit} queries processed within {process_time} (single thread)'.format(
-            limit=str(limit),
-            process_time=str(end - start)))
-        print('average query time: {avg_time}'.format(
-            avg_time=str(sum(runtimes) / float(len(runtimes)))))
-        print('max query time {max_query_time}'.format(
-            max_query_time=max(runtimes)))
+
+result_list = []
+
+
+def log_result(result):
+    result_list.append(result)
 
 if __name__ == '__main__':
-    WhooshBench.bench_queries(profile=True)
+    thread_limit = 1000
+    queries_per_thread = 50
+    start = time()
+    pool = Pool()
+    for i in range(thread_limit):
+        pool.apply_async(
+            bench_queries,
+            args=(elasticsearch_search, ),
+            kwds={'limit': queries_per_thread},
+            callback=log_result)
+    pool.close()
+    pool.join()
+    end = time()
+    print('nb threads: ' + str(thread_limit))
+    print('nb queries_per_thread: ' + str(queries_per_thread))
+    print('max single thread time (s):' + str(max(
+        result_list, key=lambda x: x['process_time'])['process_time']))
+    print('max single query time (ms): ' + str(max(
+        result_list, key=lambda x: x['max_query_time'])['max_query_time']))
+    avg_query_times = map(lambda x: x['avg_time'], result_list)
+    print('avg query time (ms): ' + str(
+        sum(avg_query_times) / float(len(avg_query_times))))
+    print('total process time (s): ' + str(end - start))

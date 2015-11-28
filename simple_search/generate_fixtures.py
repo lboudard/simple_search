@@ -49,4 +49,4 @@ def generate_songs_file(
 
 if __name__ == '__main__':
     generate_user_file(10000)
-    #generate_songs_file(100000)
+    generate_songs_file(100000)

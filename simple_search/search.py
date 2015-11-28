@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from build_indexes import IndexBuilder, index_dir
+from build_indexes import WhooshIndexBuilder, index_dir
+from elasticsearch import Elasticsearch
 from flask import Flask, jsonify, request
 from user import get_user_artists_profile
 from whoosh.qparser import QueryParser, BoostPlugin,\
@@ -28,7 +29,7 @@ qp.add_plugin(BoostPlugin())
 qp.add_plugin(FuzzyTermPlugin())
 
 
-def whoosh_search(user_id, query):
+def whoosh_search(user_id, query_terms):
     ret = {}
     user_artists_profile = get_user_artists_profile(user_id)
     # q = qp.parse("(" + "~ ".join(query.split(' ')) + "~ AND (" + " OR ".join([
@@ -38,8 +39,9 @@ def whoosh_search(user_id, query):
     #     "(" + query + " ANDMAYBE ((" + ") OR (".join([
     #         (" artist_id:" + str(artist_id) + "^" + str(1 + artist_score)) for (
     #             artist_id, artist_score) in user_artists_profile]) + ")))")
+    # see https://pythonhosted.org/Whoosh/api/query.html#whoosh.query.AndMaybe
     q = AndMaybe(
-        And([Term('title', qt) for qt in query.split(' ')]),
+        And([Term('title', qt) for qt in query_terms.split(' ')]),
         Or([Term('artist_id', artist_id, boost=artist_score) for (
             artist_id, artist_score) in user_artists_profile]))
     # app.logger.debug(q)
@@ -51,10 +53,45 @@ def whoosh_search(user_id, query):
     return ret
 
 
+def elasticsearch_search(user_id, query_terms):
+    ret = {}
+    es = Elasticsearch()
+    user_artists_profile = get_user_artists_profile(user_id)
+    # query = (
+    #     "(title:" + query_terms + ") AND ((" + ") OR (".join([
+    #         ("artist_id:" + str(artist_id) + "^" + str(1 + artist_score)) for (
+    #             artist_id, artist_score) in user_artists_profile]) + "))"
+    # )
+    query = {
+        "query": {
+            "bool": {
+                "must": {
+                    "match": {
+                        "title": {
+                            "query": query_terms,
+                            "operator": "and"
+                        }
+                    }
+                },
+                "should": [
+                    {"match": {
+                        "artist_id": {
+                            "query": str(artist_id),
+                            "boost": artist_score
+                        }
+                    }} for artist_id, artist_score in user_artists_profile
+                ]
+            }
+        }
+    }
+    ret = es.search(index="songs", body=query)#q=query)
+    return ret
+
+
 @app.route('/user/<user_id>/search')
 def search(user_id):
     query = request.args.get('q')
-    return jsonify(whoosh_search(user_id, query))
+    return jsonify(elasticsearch_search(user_id, query))
 
 
 if __name__ == '__main__':
