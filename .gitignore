@@ -56,5 +56,6 @@ docs/_build/
 # PyBuilder
 target/
 
+data
 index_dir
 !index_dir/.keep
