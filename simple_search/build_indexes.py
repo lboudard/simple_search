@@ -67,9 +67,10 @@ class WhooshIndexBuilder(object):
         writer.commit()
 
     @classmethod
-    def import_indexes_from_fixtures(cls):
+    def import_indexes_from_fixtures(cls, songs_file=songs_file):
         cls.create_indexes()
-        documents = SongFileParser.parse_song_file()
+        documents = SongFileParser.parse_song_file(
+            songs_file=songs_file)
         cls.add_documents(documents)
 
 
@@ -97,25 +98,25 @@ class ElasticSearchIndexBuilder(object):
     }
 
     @classmethod
-    def import_indexes_from_fixtures(cls):
+    def import_indexes_from_fixtures(
+            cls, songs_file=songs_file, ix_name="songs"):
         es = Elasticsearch(hosts=[cls.es_host])
-        ix_name = "songs"
         if es.indices.exists(ix_name):
             es.indices.delete(
                 index=ix_name)
         es.indices.create(index=ix_name, body=cls.es_indexes)
-        documents = SongFileParser.parse_song_file()
+        documents = SongFileParser.parse_song_file(
+            songs_file=songs_file)
         actions = [{
             '_index': ix_name,
             '_type': 'document',
             '_id': song['song_id'],
             '_source': song
         } for song in documents]
-        print len(actions)
         bulk(
             es,
             actions)
 
 if __name__ == '__main__':
-    #WhooshIndexBuilder.import_indexes_from_fixtures()
+    # WhooshIndexBuilder.import_indexes_from_fixtures()
     ElasticSearchIndexBuilder.import_indexes_from_fixtures()

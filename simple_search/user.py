@@ -32,7 +32,7 @@ def parse_raw_user(line):
     return (user_id, artists_scores)
 
 
-def import_users_from_fixtures():
+def import_users_from_fixtures(user_file=user_file):
     with open(user_file) as f:
         for line in f:
             (user_id, artists_scores) = parse_raw_user(

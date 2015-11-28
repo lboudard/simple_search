@@ -16,6 +16,9 @@ app.logger.setLevel(logging.INFO)  # use the native logger of flask
 app.logger.disabled = False
 handler = logging.StreamHandler(sys.stdout)
 app.logger.addHandler(handler)
+es_tracer = logging.getLogger('elasticsearch.trace')
+es_tracer.setLevel(logging.WARNING)
+es_tracer.addHandler(handler)
 
 filestorage = FileStorage(index_dir)
 ramstorage = copy_to_ram(filestorage)
@@ -32,9 +35,6 @@ qp.add_plugin(FuzzyTermPlugin())
 def whoosh_search(user_id, query_terms):
     ret = {}
     user_artists_profile = get_user_artists_profile(user_id)
-    # q = qp.parse("(" + "~ ".join(query.split(' ')) + "~ AND (" + " OR ".join([
-    #    str(artist_id) + "^" + str(artist_score) for (
-    #        artist_id, artist_score) in user_artists_profile]) + " OR *^0.0001))")
     # q = qp.parse(
     #     "(" + query + " ANDMAYBE ((" + ") OR (".join([
     #         (" artist_id:" + str(artist_id) + "^" + str(1 + artist_score)) for (
@@ -53,15 +53,10 @@ def whoosh_search(user_id, query_terms):
     return ret
 
 
-def elasticsearch_search(user_id, query_terms):
+def elasticsearch_search(user_id, query_terms, ix_name="songs"):
     ret = {}
     es = Elasticsearch()
     user_artists_profile = get_user_artists_profile(user_id)
-    # query = (
-    #     "(title:" + query_terms + ") AND ((" + ") OR (".join([
-    #         ("artist_id:" + str(artist_id) + "^" + str(1 + artist_score)) for (
-    #             artist_id, artist_score) in user_artists_profile]) + "))"
-    # )
     query = {
         "query": {
             "bool": {
@@ -84,7 +79,7 @@ def elasticsearch_search(user_id, query_terms):
             }
         }
     }
-    ret = es.search(index="songs", body=query)#q=query)
+    ret = es.search(index=ix_name, body=query)# q=query)
     return ret
 
 
