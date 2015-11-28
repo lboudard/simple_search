@@ -27,10 +27,8 @@ class QueryGenerator(object):
         return self
 
 
-def bench_queries(search_method, limit=100, profile=False):
+def bench_queries(search_method, queries, limit=100, profile=False):
     ret = {}
-    qg = QueryGenerator()
-    queries = [next(qg) for _ in range(limit)]
     runtimes = []
     if profile:
         # TODO profile in context manager instead
@@ -66,12 +64,15 @@ def log_result(result):
 if __name__ == '__main__':
     thread_limit = 1000
     queries_per_thread = 50
+    qg = QueryGenerator()
+    queries = [next(qg) for _ in range(thread_limit * queries_per_thread)]
     start = time()
     pool = Pool()
     for i in range(thread_limit):
         pool.apply_async(
             bench_queries,
-            args=(elasticsearch_search, ),
+            args=(elasticsearch_search, queries[
+                i * queries_per_thread: (i + 1) * queries_per_thread]),
             kwds={'limit': queries_per_thread},
             callback=log_result)
     pool.close()

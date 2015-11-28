@@ -57,6 +57,14 @@ def elasticsearch_search(user_id, query_terms, ix_name="songs"):
     ret = {}
     es = Elasticsearch()
     user_artists_profile = get_user_artists_profile(user_id)
+    # https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html
+    # The bool query calculates the relevance _score for each document
+    # by adding together the _score from all of the matching must and should clauses,
+    # and then dividing by the total number of must and should clauses.
+    # All the must clauses must match, and all the must_not clauses must not match,
+    # but how many should clauses should match? By default,
+    # none of the should clauses are required to match, with one exception:
+    # if there are no must clauses, then at least one should clause must match.
     query = {
         "query": {
             "bool": {
@@ -67,6 +75,11 @@ def elasticsearch_search(user_id, query_terms, ix_name="songs"):
                             "operator": "and"
                         }
                     }
+                    # "match_phrase": {
+                    #     "title": {
+                    #        "query": query_terms,
+                    #        "slop":  50
+                    # }
                 },
                 "should": [
                     {"match": {
@@ -77,7 +90,26 @@ def elasticsearch_search(user_id, query_terms, ix_name="songs"):
                     }} for artist_id, artist_score in user_artists_profile
                 ]
             }
-        }
+        },
+        # this should be slightly more performing (though incorrect unless window size is large enough)
+        # https://www.elastic.co/guide/en/elasticsearch/reference/2.1/search-request-rescore.html
+        # "rescore": {
+        #     "window_size": 100,
+        #     "query": {
+        #         "rescore_query": {
+        #             "bool": {
+        #                 "should": [{
+        #                     "match": {
+        #                         "artist_id": {
+        #                             "query": str(artist_id),
+        #                             "boost": artist_score
+        #                         }
+        #                     }
+        #                 } for artist_id, artist_score in user_artists_profile]
+        #             }
+        #         }
+        #     }
+        # }
     }
     ret = es.search(index=ix_name, body=query)# q=query)
     return ret

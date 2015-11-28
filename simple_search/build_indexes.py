@@ -42,7 +42,11 @@ class SongFileParser(object):
             while True:
                 documents = []
                 while(len(documents) < chunk_size):
-                    documents.append(cls.parse_raw_song(next(f)))
+                    try:
+                        documents.append(cls.parse_raw_song(next(f)))
+                    except StopIteration as e:
+                        yield documents
+                        raise e
                 yield documents
 
 
