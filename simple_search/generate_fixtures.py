@@ -21,8 +21,9 @@ def generate_user_file(
         for i in range(limit):
             line = [str(i)]
             nb_artists = int(betavariate(2, 2) * artists_per_user_limit)
-            for j in range(nb_artists):
-                line.append(str(j) + ':' + str(random()))
+            for _ in range(nb_artists):
+                line.append(str(int(
+                    random() * artist_id_limit)) + ':' + str(random()))
             f.write('|'.join(line) + '\n')
 
 
@@ -47,5 +48,5 @@ def generate_songs_file(
 
 
 if __name__ == '__main__':
-    #generate_user_file(10000)
-    generate_songs_file(100000)
+    generate_user_file(10000)
+    #generate_songs_file(100000)
