@@ -53,4 +53,18 @@ max single query time (ms): 11.0
 avg query time (ms): 4.24
 total process time (s): 0.529282808304
 
+- 5000 queries on 100 threads
+nb threads: 100
+nb queries_per_thread: 50
+max single thread time (s):0.880729913712
+max single query time (ms): 22.0
+avg query time (ms): 3.8874
+total process time (s): 17.1180708408
 
+- 50.000 queries on 1000 threads (JVM memory 360M, python 100M)
+nb threads: 1000
+nb queries_per_thread: 50
+max single thread time (s):1.60208106041
+max single query time (ms): 53.0
+avg query time (ms): 3.89212
+total process time (s): 161.067436934
