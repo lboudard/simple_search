@@ -60,5 +60,8 @@ data
 index_dir
 !index_dir/.keep
 
+!data/songs_test_fixtures.txt
+!data/user_test_fixtures.txt
+
 simple_search/dump.rdb
 .DS_Store
