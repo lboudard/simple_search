@@ -4,6 +4,9 @@ from random import randint
 from random_words import RandomWords
 from search import whoosh_search
 from time import time
+import cProfile
+import pstats
+import StringIO
 import timeit
 
 
@@ -26,14 +29,25 @@ class QueryGenerator(object):
 class WhooshBench(object):
 
     @classmethod
-    def bench_queries(cls, limit=50000):
+    def bench_queries(cls, limit=100, profile=False):
         qg = QueryGenerator()
         queries = [next(qg) for _ in range(limit)]
         runtimes = []
+        if profile:
+            # TODO profile in context manager instead
+            pr = cProfile.Profile()
+            pr.enable()
         start = time()
         for q in queries:
             runtimes.append(float(whoosh_search(*q).get('runtime')))
         end = time()
+        if profile:
+            pr.disable()
+            s = StringIO.StringIO()
+            sortby = 'cumulative'
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            print(s.getvalue())
         print('{limit} queries processed within {process_time} (single thread)'.format(
             limit=str(limit),
             process_time=str(end - start)))
@@ -43,4 +57,4 @@ class WhooshBench(object):
             max_query_time=max(runtimes)))
 
 if __name__ == '__main__':
-    WhooshBench.bench_queries()
+    WhooshBench.bench_queries(profile=True)

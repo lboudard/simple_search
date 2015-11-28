@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 from user import get_user_artists_profile
 from whoosh.qparser import QueryParser, BoostPlugin,\
     FuzzyTermPlugin, PhrasePlugin, SequencePlugin
+from whoosh.query import Term, And, Or, AndMaybe
 from whoosh.filedb.filestore import FileStorage, copy_to_ram
 import logging
 import sys
@@ -30,15 +31,17 @@ qp.add_plugin(FuzzyTermPlugin())
 def whoosh_search(user_id, query):
     ret = {}
     user_artists_profile = get_user_artists_profile(user_id)
-    # user_artists_profile.append(("*", 0.1))
-    # q = qp.parse(query)
     # q = qp.parse("(" + "~ ".join(query.split(' ')) + "~ AND (" + " OR ".join([
     #    str(artist_id) + "^" + str(artist_score) for (
     #        artist_id, artist_score) in user_artists_profile]) + " OR *^0.0001))")
-    q = qp.parse(
-        "(" + query + " ANDMAYBE ((" + ") OR (".join([
-            (" artist_id:" + str(artist_id) + "^" + str(1 + artist_score)) for (
-                artist_id, artist_score) in user_artists_profile]) + ")))")
+    # q = qp.parse(
+    #     "(" + query + " ANDMAYBE ((" + ") OR (".join([
+    #         (" artist_id:" + str(artist_id) + "^" + str(1 + artist_score)) for (
+    #             artist_id, artist_score) in user_artists_profile]) + ")))")
+    q = AndMaybe(
+        And([Term('title', qt) for qt in query.split(' ')]),
+        Or([Term('artist_id', artist_id, boost=artist_score) for (
+            artist_id, artist_score) in user_artists_profile]))
     # app.logger.debug(q)
     with ix.searcher() as searcher:
         results = searcher.search(q, limit=10)
