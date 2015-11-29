@@ -86,7 +86,7 @@ max single query time (ms): 284.0
 avg query time (ms): 24.5833
 total process time (s): 398.066573858
 
-- 50.000 simple queries (no user preferences vector) (JVM memory 390M, python 100M)
+- 50.000 simple queries (no user preferences vector)
 nb threads: 1000
 nb queries_per_thread: 50
 max single thread time (s):2.11515593529
@@ -94,3 +94,12 @@ max single query time (ms): 51.0
 avg query time (ms): 4.51782
 total process time (s): 137.558894157
 
+- 50 queries using post rescoring with rescore_query/script_score
+nb threads: 5
+nb queries_per_thread: 10
+max single thread time (s):13.7080669403
+max single query time (ms): 2810.0
+avg query time (ms): 1117.56
+total process time (s): 16.2655348778
+
+-> lot of overhead using script scores (es caching settings/parsing?)
