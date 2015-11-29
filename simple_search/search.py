@@ -75,7 +75,9 @@ def elasticsearch_search(user_id, query_terms, ix_name="songs"):
                             "operator": "and"
                         }
                     }
-                    # "match_phrase": {
+                    # slop could be interesting as order of term
+                    # seems important in this context
+                    # "span_near": {
                     #     "title": {
                     #        "query": query_terms,
                     #        "slop":  50
@@ -91,27 +93,36 @@ def elasticsearch_search(user_id, query_terms, ix_name="songs"):
                 ]
             }
         },
-        # this should be slightly more performing (though incorrect unless window size is large enough)
+        # this should be slightly more performing once es cache management is right (
+        # though incorrect unless window size is large enough)
         # https://www.elastic.co/guide/en/elasticsearch/reference/2.1/search-request-rescore.html
+        # https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-function-score-query.html#score-functions
         # "rescore": {
         #     "window_size": 100,
         #     "query": {
         #         "rescore_query": {
-        #             "bool": {
-        #                 "should": [{
-        #                     "match": {
-        #                         "artist_id": {
-        #                             "query": str(artist_id),
-        #                             "boost": artist_score
+        #             "function_score": {
+        #                 "functions": [
+        #                     {
+        #                         "filter": {
+        #                             "term": {
+        #                                 "artist_id": str(artist_id)
+        #                             },
+        #                         },
+        #                         "script_score": {
+        #                             "script": "_score + " + str(artist_score)
         #                         }
         #                     }
-        #                 } for artist_id, artist_score in user_artists_profile]
+        #                     for artist_id, artist_score in user_artists_profile
+        #                 ],
+        #                 "score_mode": "first",
+        #                 "boost_mode": "replace"
         #             }
         #         }
         #     }
         # }
     }
-    ret = es.search(index=ix_name, body=query)# q=query)
+    ret = es.search(index=ix_name, body=query)
     return ret
 
 

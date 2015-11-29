@@ -62,8 +62,8 @@ def log_result(result):
     result_list.append(result)
 
 if __name__ == '__main__':
-    thread_limit = 1000
-    queries_per_thread = 50
+    thread_limit = 5
+    queries_per_thread = 10
     qg = QueryGenerator()
     queries = [next(qg) for _ in range(thread_limit * queries_per_thread)]
     start = time()
