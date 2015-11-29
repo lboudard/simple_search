@@ -13,7 +13,11 @@ import unittest
 
 
 class TestUserPreferencesESQueries(unittest.TestCase):
+
     def setUp(self):
+        '''
+        initialize a test index
+        '''
         ElasticSearchIndexBuilder.import_indexes_from_fixtures(
             join(base_dir, 'data/songs_test_fixtures.txt'),
             ix_name="test_songs")
@@ -23,6 +27,10 @@ class TestUserPreferencesESQueries(unittest.TestCase):
         sleep(2)
 
     def test_queries(self):
+        '''
+        test that engines queries respect user's artists
+        preference vector order
+        '''
         songs = elasticsearch_search(
             0, 'socket', ix_name="test_songs")
         self.assertSequenceEqual(map(

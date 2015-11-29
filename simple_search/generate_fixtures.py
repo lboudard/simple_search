@@ -47,6 +47,10 @@ def generate_songs_file(
             f.write('|'.join(line) + '\n')
 
 
-if __name__ == '__main__':
+def main():
     generate_user_file(1000000)
     generate_songs_file(20000000)
+
+
+if __name__ == '__main__':
+    main()

@@ -24,12 +24,11 @@ filestorage = FileStorage(index_dir)
 ramstorage = copy_to_ram(filestorage)
 ix = ramstorage.open_index("songs")
 # ix = get_index("songs")
-# qp = QueryParser("concat_title_artist", ix.schema)
-qp = QueryParser("title", ix.schema)
-qp.remove_plugin_class(PhrasePlugin)
-qp.add_plugin(SequencePlugin())
-qp.add_plugin(BoostPlugin())
-qp.add_plugin(FuzzyTermPlugin())
+# qp = QueryParser("title", ix.schema)
+# qp.remove_plugin_class(PhrasePlugin)
+# qp.add_plugin(SequencePlugin())
+# qp.add_plugin(BoostPlugin())
+# qp.add_plugin(FuzzyTermPlugin())
 
 
 def whoosh_search(user_id, query_terms):
@@ -44,7 +43,6 @@ def whoosh_search(user_id, query_terms):
         And([Term('title', qt) for qt in query_terms.split(' ')]),
         Or([Term('artist_id', artist_id, boost=artist_score) for (
             artist_id, artist_score) in user_artists_profile]))
-    # app.logger.debug(q)
     with ix.searcher() as searcher:
         results = searcher.search(q, limit=10)
         ret = {

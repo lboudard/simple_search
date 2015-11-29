@@ -8,10 +8,12 @@ from time import time
 import cProfile
 import pstats
 import StringIO
-import timeit
 
 
 class QueryGenerator(object):
+    '''
+    Query rnadom generator to generate tuples (user_id, query_terms)
+    '''
     def __init__(self, user_limit=10000):
         self._user_limit = user_limit
         self._words_generator = RandomWords()
@@ -28,6 +30,9 @@ class QueryGenerator(object):
 
 
 def bench_queries(search_method, queries, limit=100, profile=False):
+    '''
+    process queries sequentially into search engine and collect runtime statistics
+    '''
     ret = {}
     runtimes = []
     if profile:
@@ -61,7 +66,11 @@ result_list = []
 def log_result(result):
     result_list.append(result)
 
-if __name__ == '__main__':
+def main():
+    '''
+    benchmark query engine on random generated queries
+    with multithreaded batches
+    '''
     # FIXME should rather use apache bench
     # http://techieroop.com/test-elasticsearch-query-performance/#.VlspjN8veYU
     thread_limit = 1000
@@ -90,3 +99,7 @@ if __name__ == '__main__':
     print('avg query time (ms): ' + str(
         sum(avg_query_times) / float(len(avg_query_times))))
     print('total process time (s): ' + str(end - start))
+
+
+if __name__ == '__main__':
+    main()

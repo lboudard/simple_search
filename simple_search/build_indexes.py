@@ -13,18 +13,17 @@ index_dir = join(base_dir, "index_dir")
 
 
 class SongFileParser(object):
+    '''
+    Utility to parse song file into dictionary
+    File input format
+    "1|Help|154681|The Beatles|25"
+    '''
     songs_fields = [
         ("song_id", lambda x: x),
         ("title", lambda x: x.strip()),
         ("popularity", lambda x: int(x)),
         ("artist", lambda x: x),
         ("artist_id", lambda x: x.strip())]
-
-    # raw_docs = [
-    #     "1|Help|154681|The Beatles|25",
-    #     "2|Requiem|45002|Mozart|365",
-    #     "3|Get Lucky|714522|Daft Punk, Parrell Williams|78404",
-    #     "4|Lucky Strike|125|Maroon 5|1"]
 
     @classmethod
     def parse_raw_song(cls, line):
@@ -110,7 +109,7 @@ class ElasticSearchIndexBuilder(object):
                 index=ix_name)
         es.indices.create(index=ix_name, body=cls.es_indexes)
         for documents in SongFileParser.parse_song_file(
-            songs_file=songs_file, chunk_size=10000):
+                songs_file=songs_file, chunk_size=10000):
             actions = [{
                 '_index': ix_name,
                 '_type': 'document',
@@ -121,6 +120,10 @@ class ElasticSearchIndexBuilder(object):
                 es,
                 actions)
 
-if __name__ == '__main__':
+
+def main():
     # WhooshIndexBuilder.import_indexes_from_fixtures()
     ElasticSearchIndexBuilder.import_indexes_from_fixtures()
+
+if __name__ == '__main__':
+    main()

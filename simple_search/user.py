@@ -23,6 +23,10 @@ def add_user_artists(user_id, artists_scores):
 
 
 def parse_raw_user(line):
+    '''
+    parse user line into a user_id, (artist_id, user_score_id) tuples
+    user_id|artist_id:artist_user_score|artist_id:artist_user_score...
+    '''
     v = line.split("|")
     user_id = v[0]
     artists_scores = {}
@@ -40,5 +44,8 @@ def import_users_from_fixtures(user_file=user_file):
             add_user_artists(user_id, artists_scores)
 
 
-if __name__ == '__main__':
+def main():
     import_users_from_fixtures()
+
+if __name__ == '__main__':
+    main()
